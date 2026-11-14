@@ -1,5 +1,18 @@
-//  GET /api/pedidos — com paginação obrigatória utilizando limit e offset, e filtro opcional por
-// nome do aluno.
-//  GET /api/pedidos/:id — deve retornar também o nome do produto, utilizando join.
-//  POST /api/pedidos — aplica as regras R1, R2 e R4 dentro de uma transação.
-//  DELETE /api/pedidos/:id — aplica a regra R3, devolvendo o estoque.
+const express = require("express");
+const router = express.Router();
+
+const pedidosController = require("../controllers/pedidosController");
+
+// GET /api/pedidos
+router.get("/", pedidosController.listarPedidos);
+
+// GET /api/pedidos/:id
+router.get("/:id", pedidosController.buscarPedidoPorId);
+
+// POST /api/pedidos
+router.post("/", pedidosController.criarPedido);
+
+// DELETE /api/pedidos/:id
+router.delete("/:id", pedidosController.deletarPedido);
+
+module.exports = router;

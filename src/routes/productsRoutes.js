@@ -1,5 +1,21 @@
-//  GET /api/produtos — lista todos os produtos, com filtros opcionais por categoria e por ativo.
-//  GET /api/produtos/:id — retorna um produto específico. Retornar 404 se não existir.
-//  POST /api/produtos — cria produto. Validar campos obrigatórios (400) e nome duplicado (409).
-//  PUT /api/produtos/:id — atualiza os dados do produto, incluindo o campo ativo.
-//  DELETE /api/produtos/:id — remove o produto respeitando a regra R5.
+const express = require("express");
+const router = express.Router();
+
+const produtosController = require("../controllers/produtosController");
+
+// GET /api/produtos
+router.get("/", produtosController.listarProdutos);
+
+// GET /api/produtos/:id
+router.get("/:id", produtosController.buscarProdutoPorId);
+
+// POST /api/produtos
+router.post("/", produtosController.criarProduto);
+
+// PUT /api/produtos/:id
+router.put("/:id", produtosController.atualizarProduto);
+
+// DELETE /api/produtos/:id
+router.delete("/:id", produtosController.deletarProduto);
+
+module.exports = router;
