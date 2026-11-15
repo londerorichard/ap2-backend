@@ -1,0 +1,18 @@
+# Dependencies
+node_modules/
+
+# SQLite database
+src/database/*.sqlite
+src/database/*.sqlite3
+src/database/*.db
+
+# Environment variables
+.env
+.env.*
+
+# Logs
+*.log
+
+# Operating system
+.DS_Store
+Thumbs.db
