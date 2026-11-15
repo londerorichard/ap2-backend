@@ -1,15 +1,24 @@
 const express = require("express");
 const router = express.Router();
 
-const relatoriosController = require("../controllers/relatoriosController");
+const reportsController = require("../controllers/reportsController");
 
 // GET /api/relatorios/vendas-por-categoria
-router.get("/vendas-por-categoria", relatoriosController.vendasPorCategoria);
+router.get(
+  "/vendas-por-categoria",
+  reportsController.vendasPorCategoria
+);
 
 // GET /api/relatorios/top-produtos
-router.get("/top-produtos", relatoriosController.topProdutos);
+router.get(
+  "/top-produtos",
+  reportsController.topProdutos
+);
 
 // GET /api/relatorios/faturamento
-router.get("/faturamento", relatoriosController.faturamento);
+router.get(
+  "/faturamento",
+  reportsController.faturamento
+);
 
 module.exports = router;

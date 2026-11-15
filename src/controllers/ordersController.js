@@ -1,9 +1,42 @@
 const db = require("../database/connection");
 
-// GET /pedidos
+// GET /api/pedidos
 async function listarPedidos(req, res) {
   try {
-    const pedidos = await db("pedidos").select();
+    const { aluno_nome } = req.query;
+
+    const limit = Number(req.query.limit ?? 10);
+    const offset = Number(req.query.offset ?? 0);
+
+    if (
+      !Number.isInteger(limit) ||
+      limit < 1 ||
+      !Number.isInteger(offset) ||
+      offset < 0
+    ) {
+      return res.status(400).json({
+        message: "Parâmetros de paginação inválidos",
+      });
+    }
+
+    const query = db("pedidos")
+      .select(
+        "id",
+        "aluno_nome",
+        "produto_id",
+        "quantidade",
+        "valor_total",
+        "created_at",
+        "updated_at"
+      );
+
+    if (aluno_nome !== undefined) {
+      query.where("aluno_nome", "like", `%${aluno_nome}%`);
+    }
+
+    const pedidos = await query
+      .limit(limit)
+      .offset(offset);
 
     return res.status(200).json(pedidos);
 
@@ -17,13 +50,30 @@ async function listarPedidos(req, res) {
 }
 
 
-// GET /pedidos/:id
+// GET /api/pedidos/:id
 async function buscarPedidoPorId(req, res) {
   try {
     const { id } = req.params;
 
+    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+      return res.status(400).json({
+        message: "ID inválido",
+      });
+    }
+
     const pedido = await db("pedidos")
-      .where({ id })
+      .join("produtos", "pedidos.produto_id", "produtos.id")
+      .select(
+        "pedidos.id",
+        "pedidos.aluno_nome",
+        "pedidos.produto_id",
+        "produtos.nome as produto_nome",
+        "pedidos.quantidade",
+        "pedidos.valor_total",
+        "pedidos.created_at",
+        "pedidos.updated_at"
+      )
+      .where("pedidos.id", id)
       .first();
 
     if (!pedido) {
@@ -44,15 +94,16 @@ async function buscarPedidoPorId(req, res) {
 }
 
 
-// POST /pedidos
+// POST /api/pedidos
 async function criarPedido(req, res) {
   try {
     const { aluno_nome, produto_id, quantidade } = req.body;
 
-    // Validate required fields
     if (
-      !aluno_nome ||
+      typeof aluno_nome !== "string" ||
+      !aluno_nome.trim() ||
       !Number.isInteger(Number(produto_id)) ||
+      Number(produto_id) <= 0 ||
       !Number.isInteger(quantidade) ||
       quantidade < 1
     ) {
@@ -63,10 +114,8 @@ async function criarPedido(req, res) {
 
     const idProduto = Number(produto_id);
 
-    // Start transaction
     const pedidoCriado = await db.transaction(async (trx) => {
 
-      // Find product
       const produto = await trx("produtos")
         .where({ id: idProduto })
         .first();
@@ -77,14 +126,14 @@ async function criarPedido(req, res) {
         });
       }
 
-      // R4: Check if product is active
+      // R4: Inactive products cannot be sold
       if (!produto.ativo) {
         throw Object.assign(new Error("Produto inativo"), {
           statusCode: 400,
         });
       }
 
-      // R2: Check available stock
+      // R2: Verify available stock
       if (produto.estoque < quantidade) {
         throw Object.assign(new Error("Estoque insuficiente"), {
           statusCode: 409,
@@ -102,20 +151,28 @@ async function criarPedido(req, res) {
         .decrement("estoque", quantidade);
 
       if (estoqueAtualizado === 0) {
-        throw Object.assign(new Error("Estoque insuficiente ou produto inativo"), {
+        const produtoAtualizado = await trx("produtos")
+          .where({ id: idProduto })
+          .first();
+
+        if (!produtoAtualizado.ativo) {
+          throw Object.assign(new Error("Produto inativo"), {
+            statusCode: 400,
+          });
+        }
+
+        throw Object.assign(new Error("Estoque insuficiente"), {
           statusCode: 409,
         });
       }
 
-      // Insert order
       const [pedidoId] = await trx("pedidos").insert({
-        aluno_nome,
+        aluno_nome: aluno_nome.trim(),
         produto_id: idProduto,
         quantidade,
         valor_total,
       });
 
-      // Retrieve created order
       return await trx("pedidos")
         .where({ id: pedidoId })
         .first();
@@ -135,14 +192,19 @@ async function criarPedido(req, res) {
 }
 
 
-// DELETE /pedidos/:id
+// DELETE /api/pedidos/:id
 async function deletarPedido(req, res) {
   try {
     const { id } = req.params;
 
+    if (!Number.isInteger(Number(id)) || Number(id) <= 0) {
+      return res.status(400).json({
+        message: "ID inválido",
+      });
+    }
+
     await db.transaction(async (trx) => {
 
-      // Find order
       const pedido = await trx("pedidos")
         .where({ id })
         .first();
@@ -158,7 +220,6 @@ async function deletarPedido(req, res) {
         .where({ id: pedido.produto_id })
         .increment("estoque", pedido.quantidade);
 
-      // Delete order
       await trx("pedidos")
         .where({ id })
         .del();

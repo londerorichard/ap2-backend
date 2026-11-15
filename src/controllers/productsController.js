@@ -3,10 +3,34 @@ const db = require("../database/connection");
 // GET /produtos
 async function listarProdutos(req, res) {
   try {
-    const produtos = await db("produtos").select();
+    const { categoria, ativo } = req.query;
+
+    const query = db("produtos").select(
+      "id",
+      "nome",
+      "categoria",
+      "preco",
+      "estoque",
+      "ativo"
+    );
+
+    if (categoria !== undefined) {
+      query.where("categoria", categoria);
+    }
+
+    if (ativo !== undefined) {
+      if (ativo !== "true" && ativo !== "false") {
+        return res.status(400).json({
+          message: "O filtro ativo deve ser true ou false",
+        });
+      }
+
+      query.where("ativo", ativo === "true");
+    }
+
+    const produtos = await query;
 
     return res.status(200).json(produtos);
-
   } catch (error) {
     console.error(error);
 

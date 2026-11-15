@@ -4,12 +4,13 @@
   "description": "Backend application developed with Node.js",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
-  },
+  "start": "node src/server.js"
+},
   "author": "Your Name",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "express": "^5.3.0",
     "knex": "^3.3.0",
     "sqlite3": "^6.0.1"
   }

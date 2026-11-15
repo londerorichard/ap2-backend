@@ -1,18 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
-const pedidosController = require("../controllers/pedidosController");
+const ordersController = require("../controllers/ordersController");
 
 // GET /api/pedidos
-router.get("/", pedidosController.listarPedidos);
+router.get("/", ordersController.listarPedidos);
 
 // GET /api/pedidos/:id
-router.get("/:id", pedidosController.buscarPedidoPorId);
+router.get("/:id", ordersController.buscarPedidoPorId);
 
 // POST /api/pedidos
-router.post("/", pedidosController.criarPedido);
+router.post("/", ordersController.criarPedido);
 
 // DELETE /api/pedidos/:id
-router.delete("/:id", pedidosController.deletarPedido);
+router.delete("/:id", ordersController.deletarPedido);
 
 module.exports = router;
